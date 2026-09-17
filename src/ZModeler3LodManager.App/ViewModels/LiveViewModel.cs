@@ -71,7 +71,7 @@ public class LiveViewModel : ObservableObject
 
         try
         {
-            StatusText = RenameProbe.TryF2OnFirstRow(_mainWindow);
+            StatusText = RenameProbe.TryAltClickOnFirstRow(_mainWindow);
         }
         catch (Exception ex)
         {

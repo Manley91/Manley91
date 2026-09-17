@@ -19,8 +19,6 @@
     <!-- UI Automation, used to attach to and inspect the running ZModeler3 window (Live tab). -->
     <Reference Include="UIAutomationClient" />
     <Reference Include="UIAutomationTypes" />
-    <!-- SendKeys, used to trigger ZModeler3's own rename interaction (F2) - diagnostic probe. -->
-    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
 
 </Project>

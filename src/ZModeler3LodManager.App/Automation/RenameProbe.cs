@@ -1,19 +1,16 @@
 using System.Threading;
 using System.Windows.Automation;
-using System.Windows.Forms;
 
 namespace ZModeler3LodManager.Automation;
 
 /// <summary>
-/// Diagnostic-only probe: selects the first row in the Scene nodes browser and sends F2, so we
-/// can inspect what appears afterwards (does an editable control show up? what does UI
-/// Automation say about it?) instead of guessing at ZModeler3's rename interaction blind.
-/// Doesn't type anything or commit any change - F2 alone doesn't rename, it only (if anything)
-/// enters edit mode with the existing name intact.
+/// Diagnostic-only probe: Alt+left-clicks the first row in the Scene nodes browser (confirmed
+/// to be ZModeler3's own rename trigger) so we can inspect what appears afterwards, instead of
+/// guessing at ZModeler3's rename interaction blind. Doesn't type anything or commit any change.
 /// </summary>
 public static class RenameProbe
 {
-    public static string TryF2OnFirstRow(AutomationElement mainWindow)
+    public static string TryAltClickOnFirstRow(AutomationElement mainWindow)
     {
         var grid = ZModeler3ScenePanel.FindSceneNodesGrid(mainWindow);
         if (grid is null)
@@ -30,16 +27,13 @@ public static class RenameProbe
         var firstRow = rows[0];
         var name = firstRow.Current.Name;
 
-        if (firstRow.TryGetCurrentPattern(SelectionItemPattern.Pattern, out var patternObj))
-        {
-            ((SelectionItemPattern)patternObj).Select();
-        }
+        var rect = firstRow.Current.BoundingRectangle;
+        var x = (int)(rect.Left + (rect.Width / 2));
+        var y = (int)(rect.Top + (rect.Height / 2));
 
-        firstRow.SetFocus();
-        Thread.Sleep(200);
-        SendKeys.SendWait("{F2}");
+        NativeInput.AltLeftClick(x, y);
         Thread.Sleep(200);
 
-        return $"Selected row \"{name}\" and sent F2. Click \"Inspect window\" now to see what changed.";
+        return $"Alt+clicked row \"{name}\" at ({x},{y}). Click \"Inspect window\" now to see what changed.";
     }
 }
