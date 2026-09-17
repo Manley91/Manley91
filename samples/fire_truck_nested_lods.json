@@ -1,0 +1,25 @@
+{
+  "roots": [
+    {
+      "name": "FireTruck",
+      "children": [
+        {
+          "name": "Body",
+          "children": [
+            { "name": "Body_high", "triangleCount": 5200 },
+            { "name": "Body_med", "triangleCount": 2600 },
+            { "name": "Body_low", "triangleCount": 900 }
+          ]
+        },
+        {
+          "name": "Ladder",
+          "children": [
+            { "name": "Ladder_high", "triangleCount": 1800 },
+            { "name": "Ladder_low", "triangleCount": 400 }
+          ]
+        },
+        { "name": "Cab", "triangleCount": 2100 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "roots": [
+    {
+      "name": "PoliceCar",
+      "children": [
+        { "name": "Body", "triangleCount": 4200 },
+        { "name": "Interior", "triangleCount": 3100 },
+        { "name": "Wheels", "triangleCount": 2600 },
+        { "name": "Lights", "triangleCount": 400 },
+        { "name": "Grille", "triangleCount": 350 },
+        { "name": "Bumper", "triangleCount": 900 }
+      ]
+    }
+  ]
+}
