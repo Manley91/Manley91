@@ -41,7 +41,10 @@ public static class LiveLodRenamer
 
         var log = new List<string>();
         const int maxAttempts = 5;
+        var windowHandle = mainWindow.Current.NativeWindowHandle;
 
+        NativeInput.ActivateWindow(windowHandle);
+        Thread.Sleep(150);
         NativeInput.SendEscape();
         Thread.Sleep(250);
 
@@ -79,7 +82,7 @@ public static class LiveLodRenamer
                 var x = (int)(rect.Left + (rect.Width / 2));
                 var y = (int)(rect.Top + (rect.Height / 2));
 
-                NativeInput.DoubleLeftClick(x, y);
+                NativeInput.DoubleLeftClickMessage(windowHandle, x, y);
                 Thread.Sleep(450);
                 NativeInput.SelectAllTypeAndCommit(newName);
                 Thread.Sleep(450);

@@ -21,6 +21,9 @@ internal static class NativeInput
     private const ushort VkReturn = 0x0D;
     private const ushort VkEscape = 0x1B;
     private const ushort VkA = 0x41;
+    private const uint WmLButtonDown = 0x0201;
+    private const uint WmLButtonUp = 0x0202;
+    private const uint WmLButtonDblClk = 0x0203;
 
     public static void SendEscape() => Send(KeyDown(VkEscape), KeyUp(VkEscape));
 
@@ -38,6 +41,30 @@ internal static class NativeInput
         Send(MouseDown(), MouseUp());
         Thread.Sleep(60);
         Send(MouseDown(), MouseUp());
+    }
+
+    /// <summary>
+    /// Double-click sent directly to a window as WM_LBUTTONDOWN/UP/DBLCLK/UP messages, bypassing
+    /// the OS's global cursor/double-click-timer path entirely. ZModeler3 appears to be one
+    /// owner-drawn window (its docked panels aren't separate child HWNDs), so this targets the
+    /// top-level window handle with coordinates converted to its client space. Worth trying when
+    /// the SendInput-based click (real synthetic hardware input) doesn't land reliably.
+    /// </summary>
+    public static void DoubleLeftClickMessage(IntPtr windowHandle, int screenX, int screenY)
+    {
+        var point = new Point { X = screenX, Y = screenY };
+        if (!ScreenToClient(windowHandle, ref point))
+        {
+            throw new InvalidOperationException($"ScreenToClient failed (Win32 error {Marshal.GetLastWin32Error()}).");
+        }
+
+        var lParam = new IntPtr((point.Y << 16) | (point.X & 0xFFFF));
+        var mkLButton = new IntPtr(0x0001);
+
+        SendMessage(windowHandle, WmLButtonDown, mkLButton, lParam);
+        SendMessage(windowHandle, WmLButtonUp, IntPtr.Zero, lParam);
+        SendMessage(windowHandle, WmLButtonDblClk, mkLButton, lParam);
+        SendMessage(windowHandle, WmLButtonUp, IntPtr.Zero, lParam);
     }
 
     /// <summary>Current system cursor position, so callers can restore it after a click.</summary>
@@ -118,6 +145,20 @@ internal static class NativeInput
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool GetCursorPos(out Point point);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool ScreenToClient(IntPtr hWnd, ref Point point);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    /// <summary>SendMessage-based clicks bypass the normal input queue, so - unlike a real or
+    /// SendInput click - they don't activate the target window on their own. Call this first so
+    /// the keyboard portion (SelectAllTypeAndCommit) actually reaches ZModeler3.</summary>
+    public static void ActivateWindow(IntPtr windowHandle) => SetForegroundWindow(windowHandle);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct Point
