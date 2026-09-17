@@ -122,7 +122,9 @@
 
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
                         <Button Content="Attach to ZModeler3" Command="{Binding Live.AttachCommand}" Padding="10,4" Margin="0,0,8,0"/>
-                        <Button Content="Inspect window" Command="{Binding Live.InspectCommand}" Padding="10,4"/>
+                        <Button Content="Inspect window" Command="{Binding Live.InspectCommand}" Padding="10,4" Margin="0,0,8,0"/>
+                        <Button Content="Probe: select first row + send F2" Command="{Binding Live.TryRenameProbeCommand}" Padding="10,4"
+                                ToolTip="Diagnostic only - selects the first Scene nodes browser row and sends F2 to see if that enters an editable rename state. Doesn't type or commit anything."/>
                     </StackPanel>
 
                     <TextBlock DockPanel.Dock="Top" Text="{Binding Live.StatusText}" TextWrapping="Wrap" Margin="0,0,0,10"/>

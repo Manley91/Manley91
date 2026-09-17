@@ -33,10 +33,13 @@ public class LiveViewModel : ObservableObject
 
     public RelayCommand InspectCommand { get; }
 
+    public RelayCommand TryRenameProbeCommand { get; }
+
     public LiveViewModel()
     {
         AttachCommand = new RelayCommand(Attach);
         InspectCommand = new RelayCommand(Inspect, () => _mainWindow is not null);
+        TryRenameProbeCommand = new RelayCommand(TryRenameProbe, () => _mainWindow is not null);
     }
 
     private void Attach()
@@ -55,6 +58,24 @@ public class LiveViewModel : ObservableObject
         finally
         {
             InspectCommand.RaiseCanExecuteChanged();
+            TryRenameProbeCommand.RaiseCanExecuteChanged();
+        }
+    }
+
+    private void TryRenameProbe()
+    {
+        if (_mainWindow is null)
+        {
+            return;
+        }
+
+        try
+        {
+            StatusText = RenameProbe.TryF2OnFirstRow(_mainWindow);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Probe failed", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
