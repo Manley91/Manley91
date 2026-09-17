@@ -39,26 +39,48 @@ public static class LiveLodRenamer
             : baseNameOverride!.Trim();
 
         var (cursorBackX, cursorBackY) = NativeInput.GetCursorPosition();
-        var renamed = new List<string>();
+        var log = new List<string>();
 
-        foreach (var row in selected)
+        // Give ZModeler3 generous time to fully open/close its inline editor between rows -
+        // firing the next Alt+click before the previous edit has settled is the likely reason
+        // only the first row in a multi-row run actually took the new name.
+        NativeInput.SendEscape();
+        Thread.Sleep(200);
+
+        for (var i = 0; i < selected.Count; i++)
         {
-            var newName = LodNaming.BuildLodName(baseName, options, renamed.Count);
+            var row = selected[i];
+            var oldName = SafeName(row);
+            var newName = LodNaming.BuildLodName(baseName, options, i);
 
             var rect = row.Current.BoundingRectangle;
             var x = (int)(rect.Left + (rect.Width / 2));
             var y = (int)(rect.Top + (rect.Height / 2));
 
             NativeInput.AltLeftClick(x, y);
-            Thread.Sleep(200);
+            Thread.Sleep(400);
             NativeInput.MoveCursorTo(cursorBackX, cursorBackY);
             NativeInput.SelectAllTypeAndCommit(newName);
-            Thread.Sleep(120);
+            Thread.Sleep(400);
+            NativeInput.SendEscape();
+            Thread.Sleep(300);
 
-            renamed.Add(newName);
+            log.Add($"[{i}] \"{oldName}\" at ({x},{y}) -> \"{newName}\"");
         }
 
-        return $"Renamed {renamed.Count} row(s): {string.Join(", ", renamed)}";
+        return $"Renamed {selected.Count} row(s):\n{string.Join("\n", log)}";
+    }
+
+    private static string SafeName(AutomationElement element)
+    {
+        try
+        {
+            return element.Current.Name;
+        }
+        catch
+        {
+            return "<unavailable>";
+        }
     }
 
     private static bool IsSelected(AutomationElement element)

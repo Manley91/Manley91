@@ -19,7 +19,10 @@ internal static class NativeInput
     private const ushort VkMenu = 0x12; // Alt
     private const ushort VkControl = 0x11;
     private const ushort VkReturn = 0x0D;
+    private const ushort VkEscape = 0x1B;
     private const ushort VkA = 0x41;
+
+    public static void SendEscape() => Send(KeyDown(VkEscape), KeyUp(VkEscape));
 
     public static void AltLeftClick(int screenX, int screenY)
     {
