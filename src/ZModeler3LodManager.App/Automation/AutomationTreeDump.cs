@@ -111,7 +111,27 @@ public static class AutomationTreeDump
             label += $" row={row}";
         }
 
+        label += $" rect={DescribeRect(element)}";
+
         return label;
+    }
+
+    private static string DescribeRect(AutomationElement element)
+    {
+        try
+        {
+            var rect = element.Current.BoundingRectangle;
+            if (rect.IsEmpty)
+            {
+                return "empty";
+            }
+
+            return $"({rect.Left:F0},{rect.Top:F0},{rect.Width:F0}x{rect.Height:F0})";
+        }
+        catch
+        {
+            return "unavailable";
+        }
     }
 
     private static bool IsSelected(AutomationElement element)
