@@ -21,4 +21,14 @@ public partial class MainWindow : Window
     {
         MessageBox.Show(Z3dNotSupportedMessage.Text, "About .z3d support", MessageBoxButton.OK, MessageBoxImage.Information);
     }
+
+    private void PinToggle_Checked(object sender, RoutedEventArgs e)
+    {
+        Topmost = true;
+    }
+
+    private void PinToggle_Unchecked(object sender, RoutedEventArgs e)
+    {
+        Topmost = false;
+    }
 }

@@ -21,6 +21,10 @@
             </MenuItem>
         </Menu>
 
+        <ToggleButton DockPanel.Dock="Top" x:Name="PinToggleButton" Content="📌 Keep window on top of ZModeler3"
+                      HorizontalAlignment="Left" Margin="8,4" Padding="8,3"
+                      Checked="PinToggle_Checked" Unchecked="PinToggle_Unchecked"/>
+
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem>
                 <TextBlock Text="{Binding File.StatusMessage}"/>
