@@ -15,4 +15,10 @@
     <ProjectReference Include="..\ZModeler3LodManager.Core\ZModeler3LodManager.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- UI Automation, used to attach to and inspect the running ZModeler3 window (Live tab). -->
+    <Reference Include="UIAutomationClient" />
+    <Reference Include="UIAutomationTypes" />
+  </ItemGroup>
+
 </Project>
