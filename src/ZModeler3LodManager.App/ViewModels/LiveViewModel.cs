@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Automation;
 using ZModeler3LodManager.Automation;
+using ZModeler3LodManager.Core.Naming;
 
 namespace ZModeler3LodManager.ViewModels;
 
@@ -47,13 +48,59 @@ public class LiveViewModel : ObservableObject
         set => SetField(ref _testRenameValue, value);
     }
 
+    private int _levelCount = 3;
+
+    public int LevelCount
+    {
+        get => _levelCount;
+        set => SetField(ref _levelCount, Math.Max(1, value));
+    }
+
+    private string _suffixFormat = "_L{n}";
+
+    public string SuffixFormat
+    {
+        get => _suffixFormat;
+        set => SetField(ref _suffixFormat, value);
+    }
+
+    private string _baseNameOverride = string.Empty;
+
+    /// <summary>Optional - if left blank, the base name is derived from the first selected row's current name.</summary>
+    public string BaseNameOverride
+    {
+        get => _baseNameOverride;
+        set => SetField(ref _baseNameOverride, value);
+    }
+
+    public RelayCommand RenameSelectedCommand { get; }
+
     public LiveViewModel()
     {
         AttachCommand = new RelayCommand(Attach);
         InspectCommand = new RelayCommand(Inspect, () => _mainWindow is not null);
         TryRenameProbeCommand = new RelayCommand(TryRenameProbe, () => _mainWindow is not null);
         TryFullRenameCommand = new RelayCommand(TryFullRename, () => _mainWindow is not null);
+        RenameSelectedCommand = new RelayCommand(RenameSelected, () => _mainWindow is not null);
         ClearCommand = new RelayCommand(Clear);
+    }
+
+    private void RenameSelected()
+    {
+        if (_mainWindow is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var options = new LodNamingOptions { LevelCount = LevelCount, SuffixFormat = SuffixFormat };
+            StatusText = LiveLodRenamer.RenameSelectedAsLodLevels(_mainWindow, options, BaseNameOverride);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Rename failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private void Clear()
@@ -80,6 +127,7 @@ public class LiveViewModel : ObservableObject
             InspectCommand.RaiseCanExecuteChanged();
             TryRenameProbeCommand.RaiseCanExecuteChanged();
             TryFullRenameCommand.RaiseCanExecuteChanged();
+            RenameSelectedCommand.RaiseCanExecuteChanged();
         }
     }
 

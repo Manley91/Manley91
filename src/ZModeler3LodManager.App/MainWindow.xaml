@@ -135,6 +135,26 @@
                                 ToolTip="Alt+clicks the first row, selects all, types the test value above, and presses Enter - this actually renames it if everything works."/>
                     </StackPanel>
 
+                    <Border DockPanel.Dock="Top" Padding="10" Margin="0,0,0,10" BorderBrush="LightGray" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Organize Existing LODs - select the variants in ZModeler3 (top to bottom = highest to lowest detail), then click Rename."
+                                       FontWeight="Bold" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="LOD levels:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBox Text="{Binding Live.LevelCount, UpdateSourceTrigger=PropertyChanged}" Width="40" Margin="0,0,16,0"/>
+
+                                <TextBlock Text="Naming pattern:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBox Text="{Binding Live.SuffixFormat, UpdateSourceTrigger=PropertyChanged}" Width="100" Margin="0,0,16,0"/>
+
+                                <TextBlock Text="Base name (optional):" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBox Text="{Binding Live.BaseNameOverride, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,16,0"
+                                         ToolTip="Leave blank to derive the base name from the first selected row's current name."/>
+
+                                <Button Content="Rename Selected as LODs" Command="{Binding Live.RenameSelectedCommand}" Padding="10,4" FontWeight="Bold"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
                     <TextBlock DockPanel.Dock="Top" Text="{Binding Live.StatusText}" TextWrapping="Wrap" Margin="0,0,0,10"/>
 
                     <TextBox Text="{Binding Live.TreeDump, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="11"
