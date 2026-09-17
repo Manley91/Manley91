@@ -30,4 +30,76 @@ public static class ZModeler3ScenePanel
 
         return result;
     }
+
+    /// <summary>Re-finds the grid and returns its currently selected rows, freshly queried -
+    /// never reuse an AutomationElement captured before a rename, ZModeler3 appears to rebuild
+    /// its row elements on commit, which silently stales out old references.</summary>
+    public static List<AutomationElement> GetFreshSelectedRows(AutomationElement mainWindow)
+    {
+        var grid = FindSceneNodesGrid(mainWindow);
+        if (grid is null)
+        {
+            return new List<AutomationElement>();
+        }
+
+        var result = new List<AutomationElement>();
+        foreach (var row in GetRows(grid))
+        {
+            if (IsSelected(row))
+            {
+                result.Add(row);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>Re-finds the grid and returns the row whose current name matches <paramref name="name"/>, or null.</summary>
+    public static AutomationElement? FindRowByName(AutomationElement mainWindow, string name)
+    {
+        var grid = FindSceneNodesGrid(mainWindow);
+        if (grid is null)
+        {
+            return null;
+        }
+
+        foreach (var row in GetRows(grid))
+        {
+            if (SafeName(row) == name)
+            {
+                return row;
+            }
+        }
+
+        return null;
+    }
+
+    public static string SafeName(AutomationElement element)
+    {
+        try
+        {
+            return element.Current.Name;
+        }
+        catch
+        {
+            return "<unavailable>";
+        }
+    }
+
+    public static bool IsSelected(AutomationElement element)
+    {
+        try
+        {
+            if (element.TryGetCurrentPattern(SelectionItemPattern.Pattern, out var patternObj))
+            {
+                return ((SelectionItemPattern)patternObj).Current.IsSelected;
+            }
+        }
+        catch
+        {
+            // Not every element supports this pattern.
+        }
+
+        return false;
+    }
 }
