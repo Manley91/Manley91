@@ -36,7 +36,7 @@ public static class LiveLodRenamer
             : baseNameOverride!.Trim();
 
         var log = new List<string>();
-        const int maxAttempts = 3;
+        const int maxAttempts = 5;
 
         NativeInput.SendEscape();
         Thread.Sleep(250);
