@@ -27,6 +27,15 @@ internal static class NativeInput
         Send(KeyDown(VkMenu), MouseDown(), MouseUp(), KeyUp(VkMenu));
     }
 
+    /// <summary>Current system cursor position, so callers can restore it after a click.</summary>
+    public static (int X, int Y) GetCursorPosition()
+    {
+        GetCursorPos(out var point);
+        return (point.X, point.Y);
+    }
+
+    public static void MoveCursorTo(int screenX, int screenY) => SetCursorPos(screenX, screenY);
+
     /// <summary>Select-all (Ctrl+A) then type <paramref name="text"/> then Enter, in whatever
     /// control currently has focus. Characters are sent as raw Unicode (KEYEVENTF_UNICODE), so
     /// this works regardless of keyboard layout and for characters with no virtual-key code.</summary>
@@ -93,6 +102,16 @@ internal static class NativeInput
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool SetCursorPos(int x, int y);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool GetCursorPos(out Point point);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Point
+    {
+        public int X;
+        public int Y;
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     private struct Input

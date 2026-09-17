@@ -63,8 +63,11 @@ public static class RenameProbe
         var x = (int)(rect.Left + (rect.Width / 2));
         var y = (int)(rect.Top + (rect.Height / 2));
 
+        var (cursorBackX, cursorBackY) = NativeInput.GetCursorPosition();
+
         NativeInput.AltLeftClick(x, y);
         Thread.Sleep(250);
+        NativeInput.MoveCursorTo(cursorBackX, cursorBackY);
         NativeInput.SelectAllTypeAndCommit(newName);
         Thread.Sleep(150);
 
