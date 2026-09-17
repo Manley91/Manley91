@@ -13,16 +13,30 @@ public static class LiveLodRenamer
 {
     public static string RenameSelectedAsLodLevels(AutomationElement mainWindow, LodNamingOptions options, string? baseNameOverride)
     {
-        var initialSelected = ZModeler3ScenePanel.GetFreshSelectedRows(mainWindow);
-        var count = initialSelected.Count;
-        if (count == 0)
+        var grid = ZModeler3ScenePanel.FindSceneNodesGrid(mainWindow);
+        if (grid is null)
+        {
+            return "Couldn't find the Scene nodes browser grid.";
+        }
+
+        var initialRows = ZModeler3ScenePanel.GetRows(grid);
+        var selectedIndices = new List<int>();
+        for (var idx = 0; idx < initialRows.Count; idx++)
+        {
+            if (ZModeler3ScenePanel.IsSelected(initialRows[idx]))
+            {
+                selectedIndices.Add(idx);
+            }
+        }
+
+        if (selectedIndices.Count == 0)
         {
             return "Nothing is selected in the Scene nodes browser. Select the variants to " +
                    "rename first (top to bottom = highest to lowest detail).";
         }
 
         var baseName = string.IsNullOrWhiteSpace(baseNameOverride)
-            ? LodNaming.GetBaseName(ZModeler3ScenePanel.SafeName(initialSelected[0]), options)
+            ? LodNaming.GetBaseName(ZModeler3ScenePanel.SafeName(initialRows[selectedIndices[0]]), options)
             : baseNameOverride!.Trim();
 
         var log = new List<string>();
@@ -31,27 +45,28 @@ public static class LiveLodRenamer
         NativeInput.SendEscape();
         Thread.Sleep(250);
 
-        // Identify each target by its POSITION in the freshly-queried selection, re-queried
-        // right before every attempt - not by name (duplicate names, e.g. several unrenamed
-        // "Box" copies, would all resolve to the same first match) and not by holding onto an
-        // AutomationElement across renames (ZModeler3 appears to rebuild row elements on
-        // commit, staling out old references).
-        for (var i = 0; i < count; i++)
+        // Target rows by their ABSOLUTE position in the grid, fixed up front - not by name
+        // (duplicate names all resolve to the same first match) and not by "currently selected"
+        // (double-clicking to rename one row drops the rest of the original multi-selection, so
+        // re-querying "selected rows" shrinks after every step). Position is stable because
+        // renaming a row doesn't reorder the grid.
+        for (var i = 0; i < selectedIndices.Count; i++)
         {
+            var rowIndex = selectedIndices[i];
             var newName = LodNaming.BuildLodName(baseName, options, i);
             var originalNameForLog = "?";
             var succeeded = false;
 
             for (var attempt = 1; attempt <= maxAttempts && !succeeded; attempt++)
             {
-                var freshSelected = ZModeler3ScenePanel.GetFreshSelectedRows(mainWindow);
-                if (i >= freshSelected.Count)
+                var freshRows = GetFreshRows(mainWindow);
+                if (rowIndex >= freshRows.Count)
                 {
-                    log.Add($"[{i}] expected at least {i + 1} selected row(s) but only found {freshSelected.Count} - stopping.");
-                    return BuildResult(log, count);
+                    log.Add($"[{i}] row index {rowIndex} is out of range (grid now has {freshRows.Count} rows) - stopping.");
+                    return BuildResult(log, selectedIndices.Count);
                 }
 
-                var target = freshSelected[i];
+                var target = freshRows[rowIndex];
                 originalNameForLog = ZModeler3ScenePanel.SafeName(target);
 
                 if (originalNameForLog == newName)
@@ -71,8 +86,8 @@ public static class LiveLodRenamer
                 NativeInput.SendEscape();
                 Thread.Sleep(300);
 
-                var verifySelected = ZModeler3ScenePanel.GetFreshSelectedRows(mainWindow);
-                succeeded = i < verifySelected.Count && ZModeler3ScenePanel.SafeName(verifySelected[i]) == newName;
+                var verifyRows = GetFreshRows(mainWindow);
+                succeeded = rowIndex < verifyRows.Count && ZModeler3ScenePanel.SafeName(verifyRows[rowIndex]) == newName;
 
                 if (!succeeded)
                 {
@@ -86,7 +101,13 @@ public static class LiveLodRenamer
                 : $"[{i}] \"{originalNameForLog}\" -> \"{newName}\" FAILED after {maxAttempts} attempts");
         }
 
-        return BuildResult(log, count);
+        return BuildResult(log, selectedIndices.Count);
+    }
+
+    private static List<AutomationElement> GetFreshRows(AutomationElement mainWindow)
+    {
+        var grid = ZModeler3ScenePanel.FindSceneNodesGrid(mainWindow);
+        return grid is null ? new List<AutomationElement>() : ZModeler3ScenePanel.GetRows(grid);
     }
 
     private static string BuildResult(List<string> log, int total)
