@@ -35,11 +35,20 @@ public class LiveViewModel : ObservableObject
 
     public RelayCommand TryRenameProbeCommand { get; }
 
+    public RelayCommand ClearCommand { get; }
+
     public LiveViewModel()
     {
         AttachCommand = new RelayCommand(Attach);
         InspectCommand = new RelayCommand(Inspect, () => _mainWindow is not null);
         TryRenameProbeCommand = new RelayCommand(TryRenameProbe, () => _mainWindow is not null);
+        ClearCommand = new RelayCommand(Clear);
+    }
+
+    private void Clear()
+    {
+        TreeDump = string.Empty;
+        StatusText = "Cleared. Do whatever you want to test in ZModeler3, then click \"Inspect window\" again.";
     }
 
     private void Attach()

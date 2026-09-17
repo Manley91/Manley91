@@ -123,8 +123,10 @@
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
                         <Button Content="Attach to ZModeler3" Command="{Binding Live.AttachCommand}" Padding="10,4" Margin="0,0,8,0"/>
                         <Button Content="Inspect window" Command="{Binding Live.InspectCommand}" Padding="10,4" Margin="0,0,8,0"/>
-                        <Button Content="Probe: Alt+click first row" Command="{Binding Live.TryRenameProbeCommand}" Padding="10,4"
+                        <Button Content="Probe: Alt+click first row" Command="{Binding Live.TryRenameProbeCommand}" Padding="10,4" Margin="0,0,8,0"
                                 ToolTip="Diagnostic only - Alt+left-clicks the first Scene nodes browser row (ZModeler3's own rename trigger) to see what appears. Doesn't type or commit anything."/>
+                        <Button Content="Clear" Command="{Binding Live.ClearCommand}" Padding="10,4"
+                                ToolTip="Clears the log below, so you can do something in ZModeler3 and then Inspect again without the old output in the way."/>
                     </StackPanel>
 
                     <TextBlock DockPanel.Dock="Top" Text="{Binding Live.StatusText}" TextWrapping="Wrap" Margin="0,0,0,10"/>
