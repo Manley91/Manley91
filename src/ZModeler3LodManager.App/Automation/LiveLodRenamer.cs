@@ -38,37 +38,48 @@ public static class LiveLodRenamer
             ? LodNaming.GetBaseName(selected[0].Current.Name, options)
             : baseNameOverride!.Trim();
 
-        var (cursorBackX, cursorBackY) = NativeInput.GetCursorPosition();
         var log = new List<string>();
+        const int maxAttempts = 3;
 
-        // Give ZModeler3 generous time to fully open/close its inline editor between rows -
-        // firing the next Alt+click before the previous edit has settled is the likely reason
-        // only the first row in a multi-row run actually took the new name.
         NativeInput.SendEscape();
-        Thread.Sleep(200);
+        Thread.Sleep(250);
 
         for (var i = 0; i < selected.Count; i++)
         {
             var row = selected[i];
             var oldName = SafeName(row);
             var newName = LodNaming.BuildLodName(baseName, options, i);
+            var succeeded = false;
 
-            var rect = row.Current.BoundingRectangle;
-            var x = (int)(rect.Left + (rect.Width / 2));
-            var y = (int)(rect.Top + (rect.Height / 2));
+            for (var attempt = 1; attempt <= maxAttempts && !succeeded; attempt++)
+            {
+                var rect = row.Current.BoundingRectangle;
+                var x = (int)(rect.Left + (rect.Width / 2));
+                var y = (int)(rect.Top + (rect.Height / 2));
 
-            NativeInput.AltLeftClick(x, y);
-            Thread.Sleep(400);
-            NativeInput.MoveCursorTo(cursorBackX, cursorBackY);
-            NativeInput.SelectAllTypeAndCommit(newName);
-            Thread.Sleep(400);
-            NativeInput.SendEscape();
-            Thread.Sleep(300);
+                NativeInput.AltLeftClick(x, y);
+                Thread.Sleep(450);
+                NativeInput.SelectAllTypeAndCommit(newName);
+                Thread.Sleep(450);
+                NativeInput.SendEscape();
+                Thread.Sleep(300);
 
-            log.Add($"[{i}] \"{oldName}\" at ({x},{y}) -> \"{newName}\"");
+                succeeded = SafeName(row) == newName;
+
+                if (!succeeded)
+                {
+                    log.Add($"[{i}] attempt {attempt} at ({x},{y}) didn't take (still \"{SafeName(row)}\") - retrying" +
+                            (attempt == maxAttempts ? " (giving up)" : "..."));
+                }
+            }
+
+            log.Add(succeeded
+                ? $"[{i}] \"{oldName}\" -> \"{newName}\" (OK)"
+                : $"[{i}] \"{oldName}\" -> \"{newName}\" FAILED after {maxAttempts} attempts");
         }
 
-        return $"Renamed {selected.Count} row(s):\n{string.Join("\n", log)}";
+        var successCount = log.Count(l => l.EndsWith("(OK)"));
+        return $"Renamed {successCount}/{selected.Count} row(s):\n{string.Join("\n", log)}";
     }
 
     private static string SafeName(AutomationElement element)
