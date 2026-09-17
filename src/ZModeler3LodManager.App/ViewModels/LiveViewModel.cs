@@ -140,7 +140,7 @@ public class LiveViewModel : ObservableObject
 
         try
         {
-            StatusText = RenameProbe.TryAltClickOnFirstRow(_mainWindow);
+            StatusText = RenameProbe.TryDoubleClickOnFirstRow(_mainWindow);
         }
         catch (Exception ex)
         {

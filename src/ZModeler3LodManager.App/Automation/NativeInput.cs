@@ -5,8 +5,8 @@ namespace ZModeler3LodManager.Automation;
 
 /// <summary>
 /// Raw Win32 input synthesis (SendInput) for interactions UI Automation patterns can't express
-/// on their own - specifically, ZModeler3's rename trigger is Alt+left-click, a modifier-held
-/// mouse click, which has no equivalent automation pattern.
+/// on their own. Alt+left-click marks/selects a Scene nodes browser row (e.g. for copy/paste);
+/// ZModeler3's actual rename trigger is a plain double left-click, no modifier.
 /// </summary>
 internal static class NativeInput
 {
@@ -28,6 +28,16 @@ internal static class NativeInput
     {
         SetCursorPos(screenX, screenY);
         Send(KeyDown(VkMenu), MouseDown(), MouseUp(), KeyUp(VkMenu));
+    }
+
+    /// <summary>A genuine double left-click (two clicks well within Windows' double-click time),
+    /// no modifier - confirmed to be the reliable manual rename trigger, unlike Alt+click.</summary>
+    public static void DoubleLeftClick(int screenX, int screenY)
+    {
+        SetCursorPos(screenX, screenY);
+        Send(MouseDown(), MouseUp());
+        Thread.Sleep(60);
+        Send(MouseDown(), MouseUp());
     }
 
     /// <summary>Current system cursor position, so callers can restore it after a click.</summary>

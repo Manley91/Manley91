@@ -60,7 +60,7 @@ public static class LiveLodRenamer
                 var x = (int)(rect.Left + (rect.Width / 2));
                 var y = (int)(rect.Top + (rect.Height / 2));
 
-                NativeInput.AltLeftClick(x, y);
+                NativeInput.DoubleLeftClick(x, y);
                 Thread.Sleep(450);
                 NativeInput.SelectAllTypeAndCommit(newName);
                 Thread.Sleep(450);

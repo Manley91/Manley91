@@ -123,8 +123,8 @@
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
                         <Button Content="Attach to ZModeler3" Command="{Binding Live.AttachCommand}" Padding="10,4" Margin="0,0,8,0"/>
                         <Button Content="Inspect window" Command="{Binding Live.InspectCommand}" Padding="10,4" Margin="0,0,8,0"/>
-                        <Button Content="Probe: Alt+click first row" Command="{Binding Live.TryRenameProbeCommand}" Padding="10,4" Margin="0,0,8,0"
-                                ToolTip="Diagnostic only - Alt+left-clicks the first Scene nodes browser row (ZModeler3's own rename trigger) to see what appears. Doesn't type or commit anything."/>
+                        <Button Content="Probe: double-click first row" Command="{Binding Live.TryRenameProbeCommand}" Padding="10,4" Margin="0,0,8,0"
+                                ToolTip="Diagnostic only - double-left-clicks the first Scene nodes browser row (ZModeler3's actual rename trigger) to see what appears. Doesn't type or commit anything."/>
                         <Button Content="Clear" Command="{Binding Live.ClearCommand}" Padding="10,4"/>
                     </StackPanel>
 
@@ -132,7 +132,7 @@
                         <TextBlock Text="Test rename value:" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox Text="{Binding Live.TestRenameValue, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,8,0"/>
                         <Button Content="Try full rename on first row" Command="{Binding Live.TryFullRenameCommand}" Padding="10,4" FontWeight="Bold"
-                                ToolTip="Alt+clicks the first row, selects all, types the test value above, and presses Enter - this actually renames it if everything works."/>
+                                ToolTip="Double-clicks the first row, selects all, types the test value above, and presses Enter - this actually renames it if everything works."/>
                     </StackPanel>
 
                     <Border DockPanel.Dock="Top" Padding="10" Margin="0,0,0,10" BorderBrush="LightGray" BorderThickness="1">
