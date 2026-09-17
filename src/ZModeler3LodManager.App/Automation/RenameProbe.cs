@@ -36,4 +36,38 @@ public static class RenameProbe
 
         return $"Alt+clicked row \"{name}\" at ({x},{y}). Click \"Inspect window\" now to see what changed.";
     }
+
+    /// <summary>
+    /// Alt+clicks the first row, then selects all + types <paramref name="newName"/> + commits
+    /// (Enter). This is the real rename mechanism, not just a look-and-see probe - it will
+    /// actually rename the first row if everything lines up.
+    /// </summary>
+    public static string TryFullRenameFirstRow(AutomationElement mainWindow, string newName)
+    {
+        var grid = ZModeler3ScenePanel.FindSceneNodesGrid(mainWindow);
+        if (grid is null)
+        {
+            return "Couldn't find the Scene nodes browser grid.";
+        }
+
+        var rows = ZModeler3ScenePanel.GetRows(grid);
+        if (rows.Count == 0)
+        {
+            return "Scene nodes browser grid has no rows (is a model loaded?).";
+        }
+
+        var firstRow = rows[0];
+        var oldName = firstRow.Current.Name;
+
+        var rect = firstRow.Current.BoundingRectangle;
+        var x = (int)(rect.Left + (rect.Width / 2));
+        var y = (int)(rect.Top + (rect.Height / 2));
+
+        NativeInput.AltLeftClick(x, y);
+        Thread.Sleep(250);
+        NativeInput.SelectAllTypeAndCommit(newName);
+        Thread.Sleep(150);
+
+        return $"Renamed row (was \"{oldName}\") to \"{newName}\" at ({x},{y}). Check ZModeler3 or click \"Inspect window\" to confirm.";
+    }
 }

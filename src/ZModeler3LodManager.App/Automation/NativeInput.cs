@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace ZModeler3LodManager.Automation;
 
@@ -12,27 +13,56 @@ internal static class NativeInput
     private const uint InputMouse = 0;
     private const uint InputKeyboard = 1;
     private const uint KeyEventFKeyUp = 0x0002;
+    private const uint KeyEventFUnicode = 0x0004;
     private const uint MouseEventFLeftDown = 0x0002;
     private const uint MouseEventFLeftUp = 0x0004;
     private const ushort VkMenu = 0x12; // Alt
+    private const ushort VkControl = 0x11;
+    private const ushort VkReturn = 0x0D;
+    private const ushort VkA = 0x41;
 
     public static void AltLeftClick(int screenX, int screenY)
     {
         SetCursorPos(screenX, screenY);
+        Send(KeyDown(VkMenu), MouseDown(), MouseUp(), KeyUp(VkMenu));
+    }
 
-        var inputs = new[]
+    /// <summary>Select-all (Ctrl+A) then type <paramref name="text"/> then Enter, in whatever
+    /// control currently has focus. Characters are sent as raw Unicode (KEYEVENTF_UNICODE), so
+    /// this works regardless of keyboard layout and for characters with no virtual-key code.</summary>
+    public static void SelectAllTypeAndCommit(string text)
+    {
+        Send(KeyDown(VkControl), KeyDown(VkA), KeyUp(VkA), KeyUp(VkControl));
+        Thread.Sleep(80);
+
+        foreach (var ch in text)
         {
-            KeyDown(VkMenu),
-            MouseDown(),
-            MouseUp(),
-            KeyUp(VkMenu),
-        };
+            Send(UnicodeKeyDown(ch), UnicodeKeyUp(ch));
+        }
 
+        Thread.Sleep(80);
+        Send(KeyDown(VkReturn), KeyUp(VkReturn));
+    }
+
+    private static void Send(params Input[] inputs)
+    {
         if (SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Input>()) != inputs.Length)
         {
             throw new InvalidOperationException($"SendInput failed (Win32 error {Marshal.GetLastWin32Error()}).");
         }
     }
+
+    private static Input UnicodeKeyDown(char ch) => new()
+    {
+        Type = InputKeyboard,
+        Data = new InputUnion { Keyboard = new KeyboardInput { VirtualKey = 0, ScanCode = ch, Flags = KeyEventFUnicode } },
+    };
+
+    private static Input UnicodeKeyUp(char ch) => new()
+    {
+        Type = InputKeyboard,
+        Data = new InputUnion { Keyboard = new KeyboardInput { VirtualKey = 0, ScanCode = ch, Flags = KeyEventFUnicode | KeyEventFKeyUp } },
+    };
 
     private static Input KeyDown(ushort vk) => new()
     {

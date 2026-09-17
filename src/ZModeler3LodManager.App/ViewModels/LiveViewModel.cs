@@ -35,13 +35,24 @@ public class LiveViewModel : ObservableObject
 
     public RelayCommand TryRenameProbeCommand { get; }
 
+    public RelayCommand TryFullRenameCommand { get; }
+
     public RelayCommand ClearCommand { get; }
+
+    private string _testRenameValue = "TEST_L0";
+
+    public string TestRenameValue
+    {
+        get => _testRenameValue;
+        set => SetField(ref _testRenameValue, value);
+    }
 
     public LiveViewModel()
     {
         AttachCommand = new RelayCommand(Attach);
         InspectCommand = new RelayCommand(Inspect, () => _mainWindow is not null);
         TryRenameProbeCommand = new RelayCommand(TryRenameProbe, () => _mainWindow is not null);
+        TryFullRenameCommand = new RelayCommand(TryFullRename, () => _mainWindow is not null);
         ClearCommand = new RelayCommand(Clear);
     }
 
@@ -68,6 +79,7 @@ public class LiveViewModel : ObservableObject
         {
             InspectCommand.RaiseCanExecuteChanged();
             TryRenameProbeCommand.RaiseCanExecuteChanged();
+            TryFullRenameCommand.RaiseCanExecuteChanged();
         }
     }
 
@@ -85,6 +97,23 @@ public class LiveViewModel : ObservableObject
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message, "Probe failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void TryFullRename()
+    {
+        if (_mainWindow is null)
+        {
+            return;
+        }
+
+        try
+        {
+            StatusText = RenameProbe.TryFullRenameFirstRow(_mainWindow, TestRenameValue);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Rename failed", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
