@@ -54,26 +54,6 @@ public static class ZModeler3ScenePanel
         return result;
     }
 
-    /// <summary>Re-finds the grid and returns the row whose current name matches <paramref name="name"/>, or null.</summary>
-    public static AutomationElement? FindRowByName(AutomationElement mainWindow, string name)
-    {
-        var grid = FindSceneNodesGrid(mainWindow);
-        if (grid is null)
-        {
-            return null;
-        }
-
-        foreach (var row in GetRows(grid))
-        {
-            if (SafeName(row) == name)
-            {
-                return row;
-            }
-        }
-
-        return null;
-    }
-
     public static string SafeName(AutomationElement element)
     {
         try
