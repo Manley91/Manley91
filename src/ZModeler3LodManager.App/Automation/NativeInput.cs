@@ -47,10 +47,46 @@ internal static class NativeInput
     /// Double-click sent directly to a window as WM_LBUTTONDOWN/UP/DBLCLK/UP messages, bypassing
     /// the OS's global cursor/double-click-timer path entirely. ZModeler3 appears to be one
     /// owner-drawn window (its docked panels aren't separate child HWNDs), so this targets the
-    /// top-level window handle with coordinates converted to its client space. Worth trying when
-    /// the SendInput-based click (real synthetic hardware input) doesn't land reliably.
+    /// top-level window handle with coordinates converted to its client space.
     /// </summary>
     public static void DoubleLeftClickMessage(IntPtr windowHandle, int screenX, int screenY)
+    {
+        var lParam = ToClientLParam(windowHandle, screenX, screenY);
+        var mkLButton = new IntPtr(0x0001);
+
+        SendMessage(windowHandle, WmLButtonDown, mkLButton, lParam);
+        SendMessage(windowHandle, WmLButtonUp, IntPtr.Zero, lParam);
+        SendMessage(windowHandle, WmLButtonDblClk, mkLButton, lParam);
+        SendMessage(windowHandle, WmLButtonUp, IntPtr.Zero, lParam);
+    }
+
+    /// <summary>
+    /// A burst of several rapid single left-clicks (not one clean double-click) - the user found
+    /// that manually "spamming" left-click is what reliably gets ZModeler3 into rename mode when
+    /// a plain double-click doesn't. This mimics that: repeated down/up pairs a beat apart, with
+    /// an explicit WM_LBUTTONDBLCLK worked into the middle of the burst for good measure.
+    /// </summary>
+    public static void SpamLeftClicksMessage(IntPtr windowHandle, int screenX, int screenY, int clickCount = 6)
+    {
+        var lParam = ToClientLParam(windowHandle, screenX, screenY);
+        var mkLButton = new IntPtr(0x0001);
+
+        for (var i = 0; i < clickCount; i++)
+        {
+            SendMessage(windowHandle, WmLButtonDown, mkLButton, lParam);
+            SendMessage(windowHandle, WmLButtonUp, IntPtr.Zero, lParam);
+
+            if (i == clickCount / 2)
+            {
+                SendMessage(windowHandle, WmLButtonDblClk, mkLButton, lParam);
+                SendMessage(windowHandle, WmLButtonUp, IntPtr.Zero, lParam);
+            }
+
+            Thread.Sleep(70);
+        }
+    }
+
+    private static IntPtr ToClientLParam(IntPtr windowHandle, int screenX, int screenY)
     {
         var point = new Point { X = screenX, Y = screenY };
         if (!ScreenToClient(windowHandle, ref point))
@@ -58,13 +94,7 @@ internal static class NativeInput
             throw new InvalidOperationException($"ScreenToClient failed (Win32 error {Marshal.GetLastWin32Error()}).");
         }
 
-        var lParam = new IntPtr((point.Y << 16) | (point.X & 0xFFFF));
-        var mkLButton = new IntPtr(0x0001);
-
-        SendMessage(windowHandle, WmLButtonDown, mkLButton, lParam);
-        SendMessage(windowHandle, WmLButtonUp, IntPtr.Zero, lParam);
-        SendMessage(windowHandle, WmLButtonDblClk, mkLButton, lParam);
-        SendMessage(windowHandle, WmLButtonUp, IntPtr.Zero, lParam);
+        return new IntPtr((point.Y << 16) | (point.X & 0xFFFF));
     }
 
     /// <summary>Current system cursor position, so callers can restore it after a click.</summary>
