@@ -93,6 +93,16 @@ public class LiveViewModel : ObservableObject
 
     public RelayCommand RenameSelectedAsSirensCommand { get; }
 
+    private string _scaleValue = "0.1";
+
+    public string ScaleValue
+    {
+        get => _scaleValue;
+        set => SetField(ref _scaleValue, value);
+    }
+
+    public RelayCommand ScaleSelectedCommand { get; }
+
     public LiveViewModel()
     {
         AttachCommand = new RelayCommand(Attach);
@@ -101,7 +111,25 @@ public class LiveViewModel : ObservableObject
         TryFullRenameCommand = new RelayCommand(TryFullRename, () => _mainWindow is not null);
         RenameSelectedCommand = new RelayCommand(RenameSelected, () => _mainWindow is not null);
         RenameSelectedAsSirensCommand = new RelayCommand(RenameSelectedAsSirens, () => _mainWindow is not null);
+        ScaleSelectedCommand = new RelayCommand(ScaleSelected, () => _mainWindow is not null);
         ClearCommand = new RelayCommand(Clear);
+    }
+
+    private void ScaleSelected()
+    {
+        if (_mainWindow is null)
+        {
+            return;
+        }
+
+        try
+        {
+            StatusText = LiveScaler.ScaleSelectedNodes(_mainWindow, ScaleValue);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Scale failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private void RenameSelectedAsSirens()
@@ -165,6 +193,7 @@ public class LiveViewModel : ObservableObject
             TryFullRenameCommand.RaiseCanExecuteChanged();
             RenameSelectedCommand.RaiseCanExecuteChanged();
             RenameSelectedAsSirensCommand.RaiseCanExecuteChanged();
+            ScaleSelectedCommand.RaiseCanExecuteChanged();
         }
     }
 

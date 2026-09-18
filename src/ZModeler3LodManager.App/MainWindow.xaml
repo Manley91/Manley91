@@ -179,6 +179,21 @@
                 </StackPanel>
             </Border>
 
+            <Border DockPanel.Dock="Top" Padding="10" Margin="0,0,0,10" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="Scale Selected - select node(s) in the Scene nodes browser, then click Scale. Writes the value into Properties &gt; Transformation &gt; Scale &gt; X/Y/Z, one node at a time."
+                               FontWeight="Bold" Margin="0,0,0,4" TextWrapping="Wrap" Foreground="{StaticResource Accent}"/>
+                    <TextBlock Text="First time using this on a scene: try it on one node first and keep Ctrl+Z (Undo) ready, in case a value doesn't take cleanly."
+                               Margin="0,0,0,8" TextWrapping="Wrap" FontStyle="Italic"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Scale to:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding Live.ScaleValue, UpdateSourceTrigger=PropertyChanged}" Width="80" Margin="0,0,16,0"/>
+
+                        <Button Content="Scale Selected (X/Y/Z)" Command="{Binding Live.ScaleSelectedCommand}" Padding="10,4" FontWeight="Bold"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <TextBlock DockPanel.Dock="Top" Text="{Binding Live.StatusText}" TextWrapping="Wrap" Margin="0,0,0,10"/>
 
             <TextBox Text="{Binding Live.TreeDump, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas" FontSize="11"
