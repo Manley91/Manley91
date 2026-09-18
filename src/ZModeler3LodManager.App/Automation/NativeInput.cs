@@ -52,13 +52,13 @@ internal static class NativeInput
     /// double-click) - the user found that manually "spamming" left-click is what reliably gets
     /// ZModeler3 into rename mode when a plain double-click sometimes doesn't.
     /// </summary>
-    public static void SpamLeftClicks(int screenX, int screenY, int clickCount = 4)
+    public static void SpamLeftClicks(int screenX, int screenY, int clickCount = 3)
     {
         SetCursorPos(screenX, screenY);
         for (var i = 0; i < clickCount; i++)
         {
             Send(MouseDown(), MouseUp());
-            Thread.Sleep(35);
+            Thread.Sleep(15);
         }
     }
 
@@ -77,14 +77,14 @@ internal static class NativeInput
     public static void SelectAllTypeAndCommit(string text)
     {
         Send(KeyDown(VkControl), KeyDown(VkA), KeyUp(VkA), KeyUp(VkControl));
-        Thread.Sleep(40);
+        Thread.Sleep(15);
 
         foreach (var ch in text)
         {
             Send(UnicodeKeyDown(ch), UnicodeKeyUp(ch));
         }
 
-        Thread.Sleep(40);
+        Thread.Sleep(15);
         Send(KeyDown(VkReturn), KeyUp(VkReturn));
     }
 

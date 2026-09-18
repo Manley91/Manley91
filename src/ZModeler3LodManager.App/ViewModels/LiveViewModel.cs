@@ -75,6 +75,24 @@ public class LiveViewModel : ObservableObject
 
     public RelayCommand RenameSelectedCommand { get; }
 
+    private string _sirenBaseName = "siren";
+
+    public string SirenBaseName
+    {
+        get => _sirenBaseName;
+        set => SetField(ref _sirenBaseName, value);
+    }
+
+    private int _sirenStartNumber = 1;
+
+    public int SirenStartNumber
+    {
+        get => _sirenStartNumber;
+        set => SetField(ref _sirenStartNumber, value);
+    }
+
+    public RelayCommand RenameSelectedAsSirensCommand { get; }
+
     public LiveViewModel()
     {
         AttachCommand = new RelayCommand(Attach);
@@ -82,7 +100,25 @@ public class LiveViewModel : ObservableObject
         TryRenameProbeCommand = new RelayCommand(TryRenameProbe, () => _mainWindow is not null);
         TryFullRenameCommand = new RelayCommand(TryFullRename, () => _mainWindow is not null);
         RenameSelectedCommand = new RelayCommand(RenameSelected, () => _mainWindow is not null);
+        RenameSelectedAsSirensCommand = new RelayCommand(RenameSelectedAsSirens, () => _mainWindow is not null);
         ClearCommand = new RelayCommand(Clear);
+    }
+
+    private void RenameSelectedAsSirens()
+    {
+        if (_mainWindow is null)
+        {
+            return;
+        }
+
+        try
+        {
+            StatusText = LiveLodRenamer.RenameSelectedSequentially(_mainWindow, SirenBaseName, SirenStartNumber);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Rename failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private void RenameSelected()
@@ -128,6 +164,7 @@ public class LiveViewModel : ObservableObject
             TryRenameProbeCommand.RaiseCanExecuteChanged();
             TryFullRenameCommand.RaiseCanExecuteChanged();
             RenameSelectedCommand.RaiseCanExecuteChanged();
+            RenameSelectedAsSirensCommand.RaiseCanExecuteChanged();
         }
     }
 

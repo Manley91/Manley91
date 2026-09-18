@@ -12,11 +12,6 @@ public partial class MainWindow : Window
         DataContext = new ShellViewModel();
     }
 
-    private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        Close();
-    }
-
     private void AboutZ3dMenuItem_Click(object sender, RoutedEventArgs e)
     {
         MessageBox.Show(Z3dNotSupportedMessage.Text, "About .z3d support", MessageBoxButton.OK, MessageBoxImage.Information);

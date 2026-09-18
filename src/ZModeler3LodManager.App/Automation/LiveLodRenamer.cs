@@ -5,13 +5,51 @@ using ZModeler3LodManager.Core.Naming;
 namespace ZModeler3LodManager.Automation;
 
 /// <summary>
-/// Live (no-file) version of "Organize Existing LODs": renames every row currently selected in
-/// ZModeler3's Scene nodes browser, in top-to-bottom order, to the configured LOD naming
-/// pattern - reusing the same LodNaming logic the file-based workflow uses.
+/// Live (no-file) renaming of whatever is currently selected in ZModeler3's Scene nodes
+/// browser, in top-to-bottom order - no export/import round trip needed.
 /// </summary>
 public static class LiveLodRenamer
 {
+    private const int MaxAttempts = 5;
+
+    /// <summary>
+    /// "Organize Existing LODs": numbering resets every LevelCount selected items, so selecting
+    /// several groups at once (e.g. 3 parts, 3 variants each) gives each its own L0..L(n-1)
+    /// instead of one sequence numbered straight through. Each group's base name is derived
+    /// fresh from its own first (still-unrenamed) member, unless overridden.
+    /// </summary>
     public static string RenameSelectedAsLodLevels(AutomationElement mainWindow, LodNamingOptions options, string? baseNameOverride)
+    {
+        var groupBaseName = baseNameOverride?.Trim() ?? string.Empty;
+
+        return RenameSelectedRows(mainWindow, (i, rowIndex) =>
+        {
+            var level = i % options.LevelCount;
+            if (level == 0 && string.IsNullOrWhiteSpace(baseNameOverride))
+            {
+                var firstInGroup = GetFreshRows(mainWindow).ElementAtOrDefault(rowIndex);
+                groupBaseName = LodNaming.GetBaseName(
+                    firstInGroup is null ? string.Empty : ZModeler3ScenePanel.SafeName(firstInGroup), options);
+            }
+
+            return (LodNaming.BuildLodName(groupBaseName, options, level), $"group {i / options.LevelCount} L{level}");
+        });
+    }
+
+    /// <summary>"Auto rename sirens": every selected row, in order, becomes "{baseName}{n}"
+    /// starting at <paramref name="startNumber"/> (1 for siren1..siren32) - one flat sequence
+    /// across the whole selection, not grouped.</summary>
+    public static string RenameSelectedSequentially(AutomationElement mainWindow, string baseName, int startNumber)
+    {
+        return RenameSelectedRows(mainWindow, (i, _) => ($"{baseName}{startNumber + i}", $"#{startNumber + i}"));
+    }
+
+    /// <summary>
+    /// Shared click/type/verify/retry loop. <paramref name="buildName"/> receives the selection
+    /// index (0-based) and the row's absolute grid position, and returns the desired new name
+    /// plus a short label for the log.
+    /// </summary>
+    private static string RenameSelectedRows(AutomationElement mainWindow, Func<int, int, (string NewName, string Label)> buildName)
     {
         var grid = ZModeler3ScenePanel.FindSceneNodesGrid(mainWindow);
         if (grid is null)
@@ -31,49 +69,32 @@ public static class LiveLodRenamer
 
         if (selectedIndices.Count == 0)
         {
-            return "Nothing is selected in the Scene nodes browser. Select the variants to " +
-                   "rename first (top to bottom = highest to lowest detail).";
+            return "Nothing is selected in the Scene nodes browser. Select the rows to rename first (top to bottom).";
         }
 
         var log = new List<string>();
-        const int maxAttempts = 5;
-        var groupBaseName = baseNameOverride?.Trim() ?? string.Empty;
 
         NativeInput.SendEscape();
-        Thread.Sleep(120);
+        Thread.Sleep(50);
 
         // Target rows by their ABSOLUTE position in the grid, fixed up front - not by name
         // (duplicate names all resolve to the same first match) and not by "currently selected"
-        // (double-clicking to rename one row drops the rest of the original multi-selection, so
-        // re-querying "selected rows" shrinks after every step). Position is stable because
-        // renaming a row doesn't reorder the grid.
-        //
-        // Numbering resets every LevelCount items: selecting several groups of LOD variants at
-        // once (e.g. 3 separate parts, 3 variants each) should give each its own L0..L(n-1),
-        // not one continuously-incrementing sequence across the whole selection. Each group's
-        // base name is derived fresh from its own first (unrenamed) member, unless overridden.
+        // (renaming a row drops the rest of the original multi-selection, so re-querying
+        // "selected rows" shrinks after every step). Position is stable because renaming a row
+        // doesn't reorder the grid.
         for (var i = 0; i < selectedIndices.Count; i++)
         {
-            var level = i % options.LevelCount;
             var rowIndex = selectedIndices[i];
-
-            if (level == 0 && string.IsNullOrWhiteSpace(baseNameOverride))
-            {
-                var firstInGroup = GetFreshRows(mainWindow).ElementAtOrDefault(rowIndex);
-                groupBaseName = LodNaming.GetBaseName(
-                    firstInGroup is null ? string.Empty : ZModeler3ScenePanel.SafeName(firstInGroup), options);
-            }
-
-            var newName = LodNaming.BuildLodName(groupBaseName, options, level);
+            var (newName, label) = buildName(i, rowIndex);
             var originalNameForLog = "?";
             var succeeded = false;
 
-            for (var attempt = 1; attempt <= maxAttempts && !succeeded; attempt++)
+            for (var attempt = 1; attempt <= MaxAttempts && !succeeded; attempt++)
             {
                 var freshRows = GetFreshRows(mainWindow);
                 if (rowIndex >= freshRows.Count)
                 {
-                    log.Add($"[{i}] row index {rowIndex} is out of range (grid now has {freshRows.Count} rows) - stopping.");
+                    log.Add($"[{label}] row index {rowIndex} is out of range (grid now has {freshRows.Count} rows) - stopping.");
                     return BuildResult(log, selectedIndices.Count);
                 }
 
@@ -91,25 +112,25 @@ public static class LiveLodRenamer
                 var y = (int)(rect.Top + (rect.Height / 2));
 
                 NativeInput.SpamLeftClicks(x, y);
-                Thread.Sleep(180);
+                Thread.Sleep(60);
                 NativeInput.SelectAllTypeAndCommit(newName);
-                Thread.Sleep(180);
+                Thread.Sleep(60);
                 NativeInput.SendEscape();
-                Thread.Sleep(120);
+                Thread.Sleep(40);
 
                 var verifyRows = GetFreshRows(mainWindow);
                 succeeded = rowIndex < verifyRows.Count && ZModeler3ScenePanel.SafeName(verifyRows[rowIndex]) == newName;
 
                 if (!succeeded)
                 {
-                    log.Add($"[group {i / options.LevelCount} L{level}] attempt {attempt} at ({x},{y}) didn't take - retrying" +
-                            (attempt == maxAttempts ? " (giving up)" : "..."));
+                    log.Add($"[{label}] attempt {attempt} at ({x},{y}) didn't take - retrying" +
+                            (attempt == MaxAttempts ? " (giving up)" : "..."));
                 }
             }
 
             log.Add(succeeded
-                ? $"[group {i / options.LevelCount} L{level}] \"{originalNameForLog}\" -> \"{newName}\" (OK)"
-                : $"[group {i / options.LevelCount} L{level}] \"{originalNameForLog}\" -> \"{newName}\" FAILED after {maxAttempts} attempts");
+                ? $"[{label}] \"{originalNameForLog}\" -> \"{newName}\" (OK)"
+                : $"[{label}] \"{originalNameForLog}\" -> \"{newName}\" FAILED after {MaxAttempts} attempts");
         }
 
         return BuildResult(log, selectedIndices.Count);
