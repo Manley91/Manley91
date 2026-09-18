@@ -1,13 +1,84 @@
 <Window x:Class="ZModeler3LodManager.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ZModeler3 LOD Manager" Height="720" Width="900" MinHeight="500" MinWidth="700">
+        Title="HNKM Easy Dev Tool" Height="720" Width="900" MinHeight="500" MinWidth="700"
+        Background="#1E1E1E">
+    <Window.Resources>
+        <SolidColorBrush x:Key="PanelBg" Color="#252526"/>
+        <SolidColorBrush x:Key="ControlBg" Color="#2D2D30"/>
+        <SolidColorBrush x:Key="Accent" Color="#3DA5F4"/>
+        <SolidColorBrush x:Key="AccentDark" Color="#1E4E7A"/>
+        <SolidColorBrush x:Key="TextColor" Color="#E6E6E6"/>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
+        </Style>
+
+        <Style TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBg}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource ControlBg}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource AccentDark}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="ToggleButton">
+            <Setter Property="Background" Value="{StaticResource ControlBg}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="{StaticResource Accent}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource ControlBg}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+            <Setter Property="CaretBrush" Value="{StaticResource TextColor}"/>
+            <Setter Property="Padding" Value="4,2"/>
+        </Style>
+
+        <Style TargetType="Menu">
+            <Setter Property="Background" Value="{StaticResource PanelBg}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
+        </Style>
+
+        <Style TargetType="MenuItem">
+            <Setter Property="Background" Value="{StaticResource PanelBg}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
+        </Style>
+
+        <Style TargetType="StatusBar">
+            <Setter Property="Background" Value="{StaticResource PanelBg}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextColor}"/>
+        </Style>
+    </Window.Resources>
+
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_Help">
                 <MenuItem Header="_About .z3d support..." Click="AboutZ3dMenuItem_Click"/>
             </MenuItem>
         </Menu>
+
+        <Border DockPanel.Dock="Top" Background="#14202E" BorderThickness="0,0,0,2" BorderBrush="{StaticResource Accent}" Padding="12,10">
+            <TextBlock Text="HNKM Easy Dev Tool" FontSize="20" FontWeight="Bold" Foreground="{StaticResource Accent}"/>
+        </Border>
 
         <ToggleButton DockPanel.Dock="Top" x:Name="PinToggleButton" Content="📌 Keep window on top of ZModeler3"
                       HorizontalAlignment="Left" Margin="8,4" Padding="8,3"
@@ -38,10 +109,10 @@
                         ToolTip="Double-clicks the first row, selects all, types the test value above, and presses Enter - this actually renames it if everything works."/>
             </StackPanel>
 
-            <Border DockPanel.Dock="Top" Padding="10" Margin="0,0,0,10" BorderBrush="LightGray" BorderThickness="1">
+            <Border DockPanel.Dock="Top" Padding="10" Margin="0,0,0,10" BorderThickness="1">
                 <StackPanel>
                     <TextBlock Text="Organize Existing LODs - select the variants in ZModeler3 (top to bottom = highest to lowest detail), then click Rename."
-                               FontWeight="Bold" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                               FontWeight="Bold" Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{StaticResource Accent}"/>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="LOD levels:" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox Text="{Binding Live.LevelCount, UpdateSourceTrigger=PropertyChanged}" Width="40" Margin="0,0,16,0"/>
@@ -58,10 +129,10 @@
                 </StackPanel>
             </Border>
 
-            <Border DockPanel.Dock="Top" Padding="10" Margin="0,0,0,10" BorderBrush="LightGray" BorderThickness="1">
+            <Border DockPanel.Dock="Top" Padding="10" Margin="0,0,0,10" BorderThickness="1">
                 <StackPanel>
                     <TextBlock Text="Auto rename sirens - select all the siren rows in order, then click Rename."
-                               FontWeight="Bold" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                               FontWeight="Bold" Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{StaticResource Accent}"/>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Base name:" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox Text="{Binding Live.SirenBaseName, UpdateSourceTrigger=PropertyChanged}" Width="100" Margin="0,0,16,0"/>
