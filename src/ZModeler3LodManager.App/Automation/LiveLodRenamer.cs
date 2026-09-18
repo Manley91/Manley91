@@ -35,12 +35,9 @@ public static class LiveLodRenamer
                    "rename first (top to bottom = highest to lowest detail).";
         }
 
-        var baseName = string.IsNullOrWhiteSpace(baseNameOverride)
-            ? LodNaming.GetBaseName(ZModeler3ScenePanel.SafeName(initialRows[selectedIndices[0]]), options)
-            : baseNameOverride!.Trim();
-
         var log = new List<string>();
         const int maxAttempts = 5;
+        var groupBaseName = baseNameOverride?.Trim() ?? string.Empty;
 
         NativeInput.SendEscape();
         Thread.Sleep(250);
@@ -50,10 +47,24 @@ public static class LiveLodRenamer
         // (double-clicking to rename one row drops the rest of the original multi-selection, so
         // re-querying "selected rows" shrinks after every step). Position is stable because
         // renaming a row doesn't reorder the grid.
+        //
+        // Numbering resets every LevelCount items: selecting several groups of LOD variants at
+        // once (e.g. 3 separate parts, 3 variants each) should give each its own L0..L(n-1),
+        // not one continuously-incrementing sequence across the whole selection. Each group's
+        // base name is derived fresh from its own first (unrenamed) member, unless overridden.
         for (var i = 0; i < selectedIndices.Count; i++)
         {
+            var level = i % options.LevelCount;
             var rowIndex = selectedIndices[i];
-            var newName = LodNaming.BuildLodName(baseName, options, i);
+
+            if (level == 0 && string.IsNullOrWhiteSpace(baseNameOverride))
+            {
+                var firstInGroup = GetFreshRows(mainWindow).ElementAtOrDefault(rowIndex);
+                groupBaseName = LodNaming.GetBaseName(
+                    firstInGroup is null ? string.Empty : ZModeler3ScenePanel.SafeName(firstInGroup), options);
+            }
+
+            var newName = LodNaming.BuildLodName(groupBaseName, options, level);
             var originalNameForLog = "?";
             var succeeded = false;
 
@@ -91,14 +102,14 @@ public static class LiveLodRenamer
 
                 if (!succeeded)
                 {
-                    log.Add($"[{i}] attempt {attempt} at ({x},{y}) didn't take - retrying" +
+                    log.Add($"[group {i / options.LevelCount} L{level}] attempt {attempt} at ({x},{y}) didn't take - retrying" +
                             (attempt == maxAttempts ? " (giving up)" : "..."));
                 }
             }
 
             log.Add(succeeded
-                ? $"[{i}] \"{originalNameForLog}\" -> \"{newName}\" (OK)"
-                : $"[{i}] \"{originalNameForLog}\" -> \"{newName}\" FAILED after {maxAttempts} attempts");
+                ? $"[group {i / options.LevelCount} L{level}] \"{originalNameForLog}\" -> \"{newName}\" (OK)"
+                : $"[group {i / options.LevelCount} L{level}] \"{originalNameForLog}\" -> \"{newName}\" FAILED after {maxAttempts} attempts");
         }
 
         return BuildResult(log, selectedIndices.Count);
