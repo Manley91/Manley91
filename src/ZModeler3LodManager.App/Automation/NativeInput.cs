@@ -4,9 +4,16 @@ using System.Threading;
 namespace ZModeler3LodManager.Automation;
 
 /// <summary>
-/// Raw Win32 input synthesis (SendInput) for interactions UI Automation patterns can't express
-/// on their own. Alt+left-click marks/selects a Scene nodes browser row (e.g. for copy/paste);
-/// ZModeler3's actual rename trigger is a plain double left-click, no modifier.
+/// Raw Win32 input synthesis (SendInput only - real synthetic hardware-level input, the same
+/// path a physical mouse/keyboard uses) for interactions UI Automation patterns can't express on
+/// their own. Alt+left-click marks/selects a Scene nodes browser row (e.g. for copy/paste);
+/// ZModeler3's actual rename trigger is left-clicking, repeated a few times.
+///
+/// Deliberately SendInput-only: an earlier version sent WM_LBUTTONDOWN/UP/DBLCLK directly to
+/// ZModeler3's window via SendMessage to bypass the OS input queue, and it froze ZModeler3 and
+/// the whole machine for ~20 seconds before crashing - SendMessage blocks the caller until the
+/// target's window procedure returns, and a legacy MFC-style app fed out-of-sequence synthetic
+/// mouse messages appears to not handle that gracefully. Don't reintroduce that path.
 /// </summary>
 internal static class NativeInput
 {
@@ -21,9 +28,6 @@ internal static class NativeInput
     private const ushort VkReturn = 0x0D;
     private const ushort VkEscape = 0x1B;
     private const ushort VkA = 0x41;
-    private const uint WmLButtonDown = 0x0201;
-    private const uint WmLButtonUp = 0x0202;
-    private const uint WmLButtonDblClk = 0x0203;
 
     public static void SendEscape() => Send(KeyDown(VkEscape), KeyUp(VkEscape));
 
@@ -34,7 +38,7 @@ internal static class NativeInput
     }
 
     /// <summary>A genuine double left-click (two clicks well within Windows' double-click time),
-    /// no modifier - confirmed to be the reliable manual rename trigger, unlike Alt+click.</summary>
+    /// no modifier - confirmed to be the manual rename trigger, unlike Alt+click.</summary>
     public static void DoubleLeftClick(int screenX, int screenY)
     {
         SetCursorPos(screenX, screenY);
@@ -44,57 +48,18 @@ internal static class NativeInput
     }
 
     /// <summary>
-    /// Double-click sent directly to a window as WM_LBUTTONDOWN/UP/DBLCLK/UP messages, bypassing
-    /// the OS's global cursor/double-click-timer path entirely. ZModeler3 appears to be one
-    /// owner-drawn window (its docked panels aren't separate child HWNDs), so this targets the
-    /// top-level window handle with coordinates converted to its client space.
+    /// A burst of several rapid single left-clicks (real SendInput clicks, not one clean
+    /// double-click) - the user found that manually "spamming" left-click is what reliably gets
+    /// ZModeler3 into rename mode when a plain double-click sometimes doesn't.
     /// </summary>
-    public static void DoubleLeftClickMessage(IntPtr windowHandle, int screenX, int screenY)
+    public static void SpamLeftClicks(int screenX, int screenY, int clickCount = 6)
     {
-        var lParam = ToClientLParam(windowHandle, screenX, screenY);
-        var mkLButton = new IntPtr(0x0001);
-
-        SendMessage(windowHandle, WmLButtonDown, mkLButton, lParam);
-        SendMessage(windowHandle, WmLButtonUp, IntPtr.Zero, lParam);
-        SendMessage(windowHandle, WmLButtonDblClk, mkLButton, lParam);
-        SendMessage(windowHandle, WmLButtonUp, IntPtr.Zero, lParam);
-    }
-
-    /// <summary>
-    /// A burst of several rapid single left-clicks (not one clean double-click) - the user found
-    /// that manually "spamming" left-click is what reliably gets ZModeler3 into rename mode when
-    /// a plain double-click doesn't. This mimics that: repeated down/up pairs a beat apart, with
-    /// an explicit WM_LBUTTONDBLCLK worked into the middle of the burst for good measure.
-    /// </summary>
-    public static void SpamLeftClicksMessage(IntPtr windowHandle, int screenX, int screenY, int clickCount = 6)
-    {
-        var lParam = ToClientLParam(windowHandle, screenX, screenY);
-        var mkLButton = new IntPtr(0x0001);
-
+        SetCursorPos(screenX, screenY);
         for (var i = 0; i < clickCount; i++)
         {
-            SendMessage(windowHandle, WmLButtonDown, mkLButton, lParam);
-            SendMessage(windowHandle, WmLButtonUp, IntPtr.Zero, lParam);
-
-            if (i == clickCount / 2)
-            {
-                SendMessage(windowHandle, WmLButtonDblClk, mkLButton, lParam);
-                SendMessage(windowHandle, WmLButtonUp, IntPtr.Zero, lParam);
-            }
-
+            Send(MouseDown(), MouseUp());
             Thread.Sleep(70);
         }
-    }
-
-    private static IntPtr ToClientLParam(IntPtr windowHandle, int screenX, int screenY)
-    {
-        var point = new Point { X = screenX, Y = screenY };
-        if (!ScreenToClient(windowHandle, ref point))
-        {
-            throw new InvalidOperationException($"ScreenToClient failed (Win32 error {Marshal.GetLastWin32Error()}).");
-        }
-
-        return new IntPtr((point.Y << 16) | (point.X & 0xFFFF));
     }
 
     /// <summary>Current system cursor position, so callers can restore it after a click.</summary>
@@ -175,20 +140,6 @@ internal static class NativeInput
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool GetCursorPos(out Point point);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool ScreenToClient(IntPtr hWnd, ref Point point);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool SetForegroundWindow(IntPtr hWnd);
-
-    /// <summary>SendMessage-based clicks bypass the normal input queue, so - unlike a real or
-    /// SendInput click - they don't activate the target window on their own. Call this first so
-    /// the keyboard portion (SelectAllTypeAndCommit) actually reaches ZModeler3.</summary>
-    public static void ActivateWindow(IntPtr windowHandle) => SetForegroundWindow(windowHandle);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct Point
