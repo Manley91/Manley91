@@ -40,7 +40,7 @@ public static class LiveLodRenamer
         var groupBaseName = baseNameOverride?.Trim() ?? string.Empty;
 
         NativeInput.SendEscape();
-        Thread.Sleep(250);
+        Thread.Sleep(120);
 
         // Target rows by their ABSOLUTE position in the grid, fixed up front - not by name
         // (duplicate names all resolve to the same first match) and not by "currently selected"
@@ -91,11 +91,11 @@ public static class LiveLodRenamer
                 var y = (int)(rect.Top + (rect.Height / 2));
 
                 NativeInput.SpamLeftClicks(x, y);
-                Thread.Sleep(450);
+                Thread.Sleep(180);
                 NativeInput.SelectAllTypeAndCommit(newName);
-                Thread.Sleep(450);
+                Thread.Sleep(180);
                 NativeInput.SendEscape();
-                Thread.Sleep(300);
+                Thread.Sleep(120);
 
                 var verifyRows = GetFreshRows(mainWindow);
                 succeeded = rowIndex < verifyRows.Count && ZModeler3ScenePanel.SafeName(verifyRows[rowIndex]) == newName;
